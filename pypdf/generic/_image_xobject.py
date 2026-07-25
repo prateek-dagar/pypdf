@@ -377,9 +377,10 @@ def _apply_decode(
     # CMYK image and other color spaces without decode
     # requires reverting scale (cf p243,2§ last sentence)
     if ImageAttributes.DECODE in x_object:
-        decode = x_object[ImageAttributes.DECODE]
-        # if invert_color and lfilters == FT.DCT_DECODE:
-        #     decode = list(reversed(decode))
+        decode = list(x_object[ImageAttributes.DECODE])
+        if invert_color and lfilters == FT.DCT_DECODE:
+            for i in range(0, len(decode), 2):
+                decode[i], decode[i + 1] = decode[i + 1], decode[i]
     elif img.mode == "CMYK" and lfilters == FT.JPX_DECODE:
         decode = [1.0, 0.0] if not invert_color else [0.0, 1.0]
         decode = decode * len(img.getbands())

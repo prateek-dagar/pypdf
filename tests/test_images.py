@@ -908,3 +908,20 @@ def test_do_image_lazy_decode_preserves_none():
     assert page._content_stream_images is not None
     # Do images should remain as None (never cached, decoded on demand each time)
     assert page._content_stream_images["/Im1"] is None
+
+
+def test_cmyk_dctdecode_explicit_decode_colors():
+    """Test that CMYK JPEG images with an explicit /Decode array are not extracted with inverted colors (issue #2931)."""
+    pdf_path = RESOURCE_ROOT / "issue_2931_example.pdf"
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+    img = page.images[0].image
+    assert img.mode == "CMYK"
+    # Get center pixel; it should be light/creamy (low values) rather than dark/inverted (high values)
+    w, h = img.size
+    center_pixel = img.getpixel((w // 2, h // 2))
+    # Inverted value is (239, 228, 221, 255); correct value is around (20, 40, 47, 9)
+    assert center_pixel[0] < 50
+    assert center_pixel[1] < 50
+    assert center_pixel[2] < 50
+    assert center_pixel[3] < 50
